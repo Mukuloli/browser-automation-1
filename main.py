@@ -1,0 +1,331 @@
+#!/usr/bin/env python3
+"""
+Browser Automation System - Main Entry Point.
+
+This module orchestrates all components of the Gemini-powered browser automation
+system. It integrates safety checks, user confirmation, task planning, action
+execution, and visual validation.
+
+Usage:
+    python main.py "Go to YouTube and search for music"
+    python main.py "Open Wikipedia and search for Python"
+
+Components:
+    - SafetyPolicy: Blocks dangerous domains and actions
+    - ConfirmationManager: Handles user approval workflow
+    - TaskPlanner: Generates step-by-step execution plans
+    - VisualValidator: Validates step completion via screenshots
+    - Actions: Executes browser actions (click, type, navigate, etc.)
+"""
+
+import sys
+import time
+from typing import Optional
+
+from google.genai.types import Content, Part
+from playwright.sync_api import sync_playwright
+
+from config import (
+    client,
+    get_generate_config,
+    MODEL_NAME,
+    SCREEN_WIDTH,
+    SCREEN_HEIGHT,
+)
+from utils import (
+    # Actions
+    execute_function_calls,
+    has_function_calls,
+    get_text_response,
+    get_function_responses,
+    set_safety_policy,
+    # Task Planning
+    generate_plan,
+    # Visual Validation
+    validate_step,
+    save_error,
+    # Confirmation
+    confirm_plan,
+    confirm_step,
+    # Safety
+    SafetyPolicy,
+    SessionScope,
+    is_stopped,
+    reset_stop,
+    # Helpers
+    print_header,
+)
+
+
+def run(
+    goal: str,
+    confirm: bool = True,
+    scope: Optional[SessionScope] = None,
+) -> None:
+    """
+    Execute browser automation task with full module integration.
+    
+    This function orchestrates all components:
+    1. Initialize SafetyPolicy
+    2. Generate execution plan via TaskPlanner
+    3. Get user confirmation via ConfirmationManager
+    4. Launch browser and execute steps
+    5. Validate each step via VisualValidator
+    
+    Args:
+        goal: Natural language description of the task
+        confirm: Whether to require user confirmation (default: True)
+        scope: Optional SessionScope to limit actions/domains
+    """
+    print_header("🚀 Browser Automation System")
+    print(f"Goal: {goal}\n")
+    
+    # Initialize Safety Policy
+    if scope is None:
+        scope = SessionScope(
+            allowed_domains=[],
+            max_actions=100,
+            max_tokens=200000,
+            timeout_minutes=30,
+            require_step_confirmation=False,
+        )
+    
+    safety_policy = SafetyPolicy(scope)
+    set_safety_policy(safety_policy)
+    print("🛡️  Safety Policy initialized")
+    
+    # Reset emergency stop
+    reset_stop()
+    
+    # Generate Plan
+    print("\n📋 Planning with TaskPlanner...")
+    plan = generate_plan(goal)
+    
+    # User Confirmation
+    if confirm:
+        approval = confirm_plan(plan)
+        if approval == "no":
+            print("❌ Cancelled by user")
+            return
+        step_mode = approval == "step"
+    else:
+        step_mode = False
+    
+    # Launch Browser
+    print("\n🌐 Launching browser...")
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.launch(
+        headless=False,
+        args=["--start-maximized"],
+    )
+    context = browser.new_context(
+        viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT}
+    )
+    page = context.new_page()
+    page.goto("about:blank")
+    
+    # Get model config
+    config = get_generate_config()
+    completed, failed, tokens = 0, 0, 0
+    
+    try:
+        # Execute each step
+        for step in plan.steps:
+            if is_stopped():
+                print("\n🛑 Emergency stop triggered!")
+                break
+            
+            if step_mode and not confirm_step(step):
+                print(f"  ⏭️  Step {step.num} skipped")
+                continue
+            
+            print(f"\n📍 Step {step.num}: {step.action.upper()} - {step.desc}")
+            
+            # Wait for page to settle
+            time.sleep(1)
+            
+            # Build initial prompt with screenshot and current URL context
+            current_url = page.url if not page.is_closed() else "about:blank"
+            screenshot = page.screenshot(type="png") if not page.is_closed() else None
+            
+            prompt = f"""You are controlling a browser. The browser is ALREADY OPEN.
+
+CURRENT PAGE: {current_url}
+(Screenshot of current page is attached below)
+
+YOUR TASK - Execute this step:
+- Action: {step.action}
+- Description: {step.desc}
+- Target: {step.target}
+- Value: {step.value}
+
+IMPORTANT RULES:
+1. DO NOT call open_web_browser - the browser is already open
+2. If you need to navigate, use the 'navigate' function with a URL
+3. Work with the CURRENT page shown in the screenshot
+4. Close any pop-ups or modals that block your target elements
+5. Wait for elements to load if needed
+6. Complete ONLY this step, then report done
+
+Execute the step now."""
+            
+            parts = [Part(text=prompt)]
+            if screenshot:
+                parts.append(Part.from_bytes(data=screenshot, mime_type="image/png"))
+            contents = [Content(role="user", parts=parts)]
+            
+            # Agent loop for step execution
+            for iteration in range(5):
+                if is_stopped():
+                    break
+                
+                print(f"  🤖 Turn {iteration + 1}...")
+                
+                try:
+                    response = client.models.generate_content(
+                        model=MODEL_NAME,
+                        contents=contents,
+                        config=config,
+                    )
+                except Exception as error:
+                    print(f"  ❌ API Error: {error}")
+                    break
+                
+                # Track and display token usage
+                if response.usage_metadata:
+                    prompt_tokens = response.usage_metadata.prompt_token_count or 0
+                    response_tokens = response.usage_metadata.candidates_token_count or 0
+                    turn_tokens = prompt_tokens + response_tokens
+                    tokens += turn_tokens
+                    print(f"  📊 Tokens: {turn_tokens:,} (prompt: {prompt_tokens:,}, response: {response_tokens:,}) | Total: {tokens:,}")
+                    safety_policy.record_action(
+                        response.usage_metadata.candidates_token_count or 0
+                    )
+                
+                candidate = response.candidates[0]
+                contents.append(candidate.content)
+                
+                # Print text response
+                text = get_text_response(candidate)
+                if text:
+                    print(f"  💬 {text[:150]}...")
+                
+                # Check for function calls
+                if not has_function_calls(candidate):
+                    print("  ✓ Step actions complete")
+                    break
+                
+                # Execute function calls
+                print("  ⚡ Executing actions...")
+                results = execute_function_calls(candidate, page)
+                
+                # Check for blocked actions
+                for name, result, _ in results:
+                    if result.get("blocked"):
+                        print(f"  🛑 Action blocked: {result.get('error')}")
+                
+                time.sleep(0.5)
+                
+                # Build function responses
+                if not page.is_closed():
+                    func_responses, screenshot = get_function_responses(page, results)
+                    response_parts = [
+                        Part(function_response=fr) for fr in func_responses
+                    ]
+                    if screenshot:
+                        response_parts.append(
+                            Part.from_bytes(data=screenshot, mime_type="image/png")
+                        )
+                    contents.append(Content(role="user", parts=response_parts))
+            
+            # Validate step completion
+            if not page.is_closed():
+                print("  🔍 Validating with VisualValidator...")
+                validation = validate_step(page.screenshot(type="png"), step.expected)
+                if validation.success:
+                    print(f"  ✅ Validated: {validation.reason}")
+                    completed += 1
+                else:
+                    print(f"  ❌ Failed: {validation.reason}")
+                    save_error(
+                        page.screenshot(type="png"),
+                        step.num,
+                        validation.error_type or "failed",
+                        validation.reason,
+                    )
+                    failed += 1
+        
+        # Print Summary
+        _print_summary(completed, failed, tokens, plan, safety_policy)
+        
+        print("\n⏳ Browser open. Press Ctrl+C to close...")
+        while True:
+            time.sleep(1)
+            
+    except KeyboardInterrupt:
+        print("\n🛑 Interrupted by user")
+    finally:
+        _cleanup(browser, playwright)
+
+
+def _print_summary(
+    completed: int,
+    failed: int,
+    tokens: int,
+    plan,
+    safety_policy: SafetyPolicy,
+) -> None:
+    """Print execution summary."""
+    print(f"\n{'=' * 60}")
+    print("📊 EXECUTION SUMMARY")
+    print(f"{'=' * 60}")
+    print(f"  ✅ Steps Completed: {completed}/{len(plan.steps)}")
+    print(f"  ❌ Steps Failed: {failed}")
+    print(f"  📊 Tokens Used: {tokens:,}")
+    
+    safety_summary = safety_policy.get_summary()
+    print("\n🛡️  SAFETY SUMMARY")
+    print(f"  Actions executed: {safety_summary['actions_executed']}")
+    print(f"  Violations blocked: {safety_summary['violations_blocked']}")
+    print(f"  Session duration: {safety_summary['session_duration_minutes']:.1f} min")
+
+
+def _cleanup(browser, playwright) -> None:
+    """Clean up browser resources."""
+    try:
+        browser.close()
+        playwright.stop()
+    except Exception:
+        pass
+
+
+def main() -> None:
+    """CLI entry point."""
+    if len(sys.argv) > 1:
+        goal = " ".join(sys.argv[1:])
+        run(goal)
+    else:
+        _print_usage()
+
+
+def _print_usage() -> None:
+    """Print usage information."""
+    print("=" * 60)
+    print("🤖 Browser Automation System")
+    print("=" * 60)
+    print("\nUsage: python main.py \"your task here\"")
+    print("\nExamples:")
+    print('  python main.py "Go to YouTube and search for music"')
+    print('  python main.py "Go to Google and search for weather"')
+    print('  python main.py "Open Wikipedia and search for Python"')
+    print("\nIntegrated Modules:")
+    print("  • SafetyPolicy      - Blocks dangerous actions")
+    print("  • ConfirmationManager - User approval workflow")
+    print("  • TaskPlanner       - Step-by-step plan generation")
+    print("  • VisualValidator   - Screenshot-based validation")
+    print("  • Actions           - Browser action execution")
+    print("  • CaptchaSolver     - CAPTCHA challenge handling")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,17 @@
+# Browser Automation Dependencies
+# Production requirements for deployment
+
+# Google Gemini AI SDK
+google-genai>=1.0.0
+
+# Browser automation
+playwright>=1.40.0
+
+# Environment management
+python-dotenv>=1.0.0
+
+# Terminal colors
+colorama>=0.4.6
+
+# HTTP retry logic (for API calls)
+tenacity>=8.0.0

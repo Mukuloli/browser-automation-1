@@ -1,0 +1,41 @@
+# Environment variables (NEVER commit secrets!)
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Error screenshots (optional - remove if you want to track these)
+error_screenshots/
+
+# Safety logs (may contain sensitive info)
+utils/safety_log.json
+safety_log.json
+
+# OS files
+.DS_Store
+Thumbs.db
