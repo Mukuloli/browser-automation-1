@@ -77,14 +77,39 @@ EXCLUDED_FUNCTIONS: List[str] = [
 # Model Configuration Factory
 # =============================================================================
 
-def get_generate_config() -> types.GenerateContentConfig:
+# =============================================================================
+# Performance Optimization Configuration
+# =============================================================================
+
+# Screenshot optimization settings
+SCREENSHOT_SCALE: float = float(os.getenv("SCREENSHOT_SCALE", "0.75"))  # 0.75 = ~1080p from 1440x900
+SCREENSHOT_QUALITY: int = int(os.getenv("SCREENSHOT_QUALITY", "85"))  # JPEG quality 0-100
+ENABLE_GRAYSCALE: bool = os.getenv("ENABLE_GRAYSCALE", "false").lower() == "true"
+ENABLE_DOM_HINTS: bool = os.getenv("ENABLE_DOM_HINTS", "true").lower() == "true"
+
+# Smart screenshot settings - skip screenshots for these actions
+SKIP_SCREENSHOT_ACTIONS: List[str] = ["hover_at", "wait"]
+
+# Model optimization settings
+OPTIMIZED_TEMPERATURE: float = 0.0  # Deterministic responses for automation
+OPTIMIZED_MAX_OUTPUT_TOKENS: int = 512  # Limit response length for faster processing
+
+
+# =============================================================================
+# Model Configuration Factory
+# =============================================================================
+
+def get_generate_config(optimized: bool = True) -> types.GenerateContentConfig:
     """
     Create and return the GenerateContentConfig for Gemini API.
+    
+    Args:
+        optimized: If True, use performance-optimized parameters (default: True)
     
     Returns:
         GenerateContentConfig with Computer Use tool and ThinkingConfig enabled.
     """
-    return types.GenerateContentConfig(
+    config = types.GenerateContentConfig(
         tools=[
             types.Tool(
                 computer_use=types.ComputerUse(
@@ -95,3 +120,10 @@ def get_generate_config() -> types.GenerateContentConfig:
         ],
         thinking_config=types.ThinkingConfig(include_thoughts=True),
     )
+    
+    # Apply performance optimizations
+    if optimized:
+        config.temperature = OPTIMIZED_TEMPERATURE
+        config.max_output_tokens = OPTIMIZED_MAX_OUTPUT_TOKENS
+    
+    return config

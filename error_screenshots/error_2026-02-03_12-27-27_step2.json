@@ -1,0 +1,6 @@
+{
+  "timestamp": "2026-02-03_12-27-27",
+  "step_num": 2,
+  "error_type": "not_found",
+  "reason": "The flight search input fields (From, To, Departure, Return) are not visible on the page. Only the 'Search' button and other options are present."
+}

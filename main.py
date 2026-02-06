@@ -31,6 +31,7 @@ from config import (
     MODEL_NAME,
     SCREEN_WIDTH,
     SCREEN_HEIGHT,
+    ENABLE_DOM_HINTS,
 )
 from utils import (
     # Actions
@@ -39,6 +40,7 @@ from utils import (
     get_text_response,
     get_function_responses,
     set_safety_policy,
+    should_skip_screenshot,
     # Task Planning
     generate_plan,
     # Visual Validation
@@ -54,6 +56,10 @@ from utils import (
     reset_stop,
     # Helpers
     print_header,
+    # Optimization
+    optimize_screenshot,
+    format_dom_hints,
+    get_image_info,
 )
 
 
@@ -148,12 +154,31 @@ def run(
             current_url = page.url if not page.is_closed() else "about:blank"
             screenshot = page.screenshot(type="png") if not page.is_closed() else None
             
+            # Optimize screenshot
+            if screenshot:
+                original_info = get_image_info(screenshot)
+                screenshot = optimize_screenshot(screenshot)
+                optimized_info = get_image_info(screenshot)
+                print(f"  📸 Screenshot: {original_info['width']}x{original_info['height']} ({original_info['size_bytes']:,} bytes) → {optimized_info['width']}x{optimized_info['height']} ({optimized_info['size_bytes']:,} bytes)")
+            
+            # Extract DOM hints if enabled
+            dom_hints = ""
+            if ENABLE_DOM_HINTS and not page.is_closed():
+                try:
+                    dom_hints = format_dom_hints(page)
+                    print(f"  🔍 Extracted {len(dom_hints.split('\n'))} DOM elements")
+                except Exception as e:
+                    print(f"  ⚠️  DOM extraction failed: {e}")
+            
+            # Enhanced prompt with batching encouragement and DOM hints
             prompt = f"""You are controlling a browser. The browser is ALREADY OPEN.
 
 CURRENT PAGE: {current_url}
 (Screenshot of current page is attached below)
 
-YOUR TASK - Execute this step:
+{dom_hints if dom_hints else ""}
+
+YOUR TASK - Execute this step efficiently:
 - Action: {step.action}
 - Description: {step.desc}
 - Target: {step.target}
@@ -163,11 +188,12 @@ IMPORTANT RULES:
 1. DO NOT call open_web_browser - the browser is already open
 2. If you need to navigate, use the 'navigate' function with a URL
 3. Work with the CURRENT page shown in the screenshot
-4. Close any pop-ups or modals that block your target elements
-5. Wait for elements to load if needed
-6. Complete ONLY this step, then report done
+4. BATCH MULTIPLE ACTIONS when possible (e.g., click + type + press_key in one turn)
+5. Use the DOM element coordinates provided above to click precisely
+6. Close any pop-ups or modals that block your target elements
+7. Complete ONLY this step efficiently, then report done
 
-Execute the step now."""
+Execute the step now with minimal turns."""
             
             parts = [Part(text=prompt)]
             if screenshot:
@@ -226,22 +252,33 @@ Execute the step now."""
                 
                 time.sleep(0.5)
                 
-                # Build function responses
+                # Build function responses with smart screenshot logic
                 if not page.is_closed():
-                    func_responses, screenshot = get_function_responses(page, results)
+                    skip_screenshot = should_skip_screenshot(results)
+                    func_responses, screenshot = get_function_responses(page, results, skip_screenshot)
+                    
                     response_parts = [
                         Part(function_response=fr) for fr in func_responses
                     ]
+                    
                     if screenshot:
+                        # Optimize screenshot before sending
+                        screenshot = optimize_screenshot(screenshot)
                         response_parts.append(
                             Part.from_bytes(data=screenshot, mime_type="image/png")
                         )
+                    elif not skip_screenshot:
+                        # If we didn't skip but have no screenshot, page might be closed
+                        print("  ⚠️  Page closed, skipping screenshot")
+                    
                     contents.append(Content(role="user", parts=response_parts))
             
             # Validate step completion
             if not page.is_closed():
                 print("  🔍 Validating with VisualValidator...")
-                validation = validate_step(page.screenshot(type="png"), step.expected)
+                validation_screenshot = page.screenshot(type="png")
+                # Don't optimize validation screenshot - keep full quality for accuracy
+                validation = validate_step(validation_screenshot, step.expected)
                 if validation.success:
                     print(f"  ✅ Validated: {validation.reason}")
                     completed += 1

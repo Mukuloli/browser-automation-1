@@ -1,0 +1,6 @@
+{
+  "timestamp": "2026-02-02_16-46-38",
+  "step_num": 3,
+  "error_type": "unexpected",
+  "reason": "The origin field shows 'New Delhi' selected, not 'Delhi' being typed, and no matching suggestions are visible below it. Instead, a calendar for date selection is displayed."
+}

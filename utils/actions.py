@@ -394,9 +394,11 @@ def get_text_response(candidate) -> str:
     return " ".join(texts)
 
 
+
 def get_function_responses(
     page: Page,
     results: List[Tuple[str, Dict[str, Any], bool]],
+    skip_screenshot: bool = False,
 ) -> Tuple[List[types.FunctionResponse], Optional[bytes]]:
     """
     Build FunctionResponse objects with current page state.
@@ -404,11 +406,15 @@ def get_function_responses(
     Args:
         page: Playwright page object
         results: List of (function_name, result, has_safety_decision) tuples
+        skip_screenshot: If True, don't capture screenshot (for minor actions)
         
     Returns:
         Tuple of (function_responses list, screenshot_bytes)
     """
-    screenshot_bytes = page.screenshot(type="png") if not page.is_closed() else None
+    screenshot_bytes = None
+    if not skip_screenshot and not page.is_closed():
+        screenshot_bytes = page.screenshot(type="png")
+    
     current_url = page.url if not page.is_closed() else ""
     
     function_responses = []
@@ -429,3 +435,25 @@ def get_function_responses(
         )
     
     return function_responses, screenshot_bytes
+
+
+def should_skip_screenshot(results: List[Tuple[str, Dict[str, Any], bool]]) -> bool:
+    """
+    Determine if screenshot should be skipped based on executed actions.
+    
+    Args:
+        results: List of (function_name, result, has_safety_decision) tuples
+        
+    Returns:
+        True if screenshot can be skipped for these actions
+    """
+    from config import SKIP_SCREENSHOT_ACTIONS
+    
+    # Skip screenshot only if ALL actions are minor
+    for item in results:
+        name = item[0]
+        if name not in SKIP_SCREENSHOT_ACTIONS:
+            return False
+    
+    return len(results) > 0
+

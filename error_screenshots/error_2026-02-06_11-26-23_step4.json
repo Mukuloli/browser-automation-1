@@ -1,0 +1,6 @@
+{
+  "timestamp": "2026-02-06_11-26-23",
+  "step_num": 4,
+  "error_type": "unexpected",
+  "reason": "The 'From' field is populated with 'New Delhi', not 'Delhi' as expected."
+}

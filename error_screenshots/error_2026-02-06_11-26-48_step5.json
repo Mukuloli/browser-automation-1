@@ -1,0 +1,6 @@
+{
+  "timestamp": "2026-02-06_11-26-48",
+  "step_num": 5,
+  "error_type": "unexpected",
+  "reason": "The destination input field contains 'Mumbai', but no dropdown suggestions are visible below the field."
+}

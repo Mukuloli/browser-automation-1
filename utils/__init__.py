@@ -24,6 +24,7 @@ from .actions import (
     get_function_responses,
     set_safety_policy,
     execute_action,
+    should_skip_screenshot,
 )
 from .task_planner import TaskPlanner, TaskPlan, Step
 from .visual_validator import VisualValidator, ValidationResult
@@ -37,6 +38,8 @@ from .safety_policy import (
 )
 from .confirmation import ConfirmationManager
 from .helpers import print_header, print_step, denormalize_x, denormalize_y
+from .image_optimizer import optimize_screenshot, get_image_info
+from .dom_extractor import format_dom_hints, extract_interactive_elements
 
 
 # =============================================================================
@@ -179,6 +182,7 @@ __all__ = [
     "get_function_responses",
     "set_safety_policy",
     "execute_action",
+    "should_skip_screenshot",
     # Task Planner
     "TaskPlanner",
     "TaskPlan",
@@ -211,4 +215,9 @@ __all__ = [
     "print_step",
     "denormalize_x",
     "denormalize_y",
+    # Optimization
+    "optimize_screenshot",
+    "get_image_info",
+    "format_dom_hints",
+    "extract_interactive_elements",
 ]

@@ -13,5 +13,8 @@ python-dotenv>=1.0.0
 # Terminal colors
 colorama>=0.4.6
 
+# Image processing for screenshot optimization
+Pillow>=10.0.0
+
 # HTTP retry logic (for API calls)
 tenacity>=8.0.0
