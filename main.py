@@ -339,8 +339,42 @@ def _cleanup(browser, playwright) -> None:
 def main() -> None:
     """CLI entry point."""
     if len(sys.argv) > 1:
-        goal = " ".join(sys.argv[1:])
-        run(goal)
+        # Check for flight booking mode
+        if sys.argv[1] in ["--flight-booking", "--book-flight", "-f"]:
+            from utils.flight_booking_input import (
+                collect_flight_details,
+                format_booking_summary,
+                confirm_booking,
+            )
+            from utils.flight_booking_workflow import execute_flight_booking
+            
+            try:
+                # Collect flight details
+                booking_details = collect_flight_details()
+                
+                # Show summary
+                summary = format_booking_summary(booking_details)
+                print(summary)
+                
+                # Confirm
+                if not confirm_booking():
+                    print("\n❌ Booking cancelled by user.\n")
+                    return
+                
+                # Execute booking
+                print("\n🚀 Starting flight booking automation...\n")
+                execute_flight_booking(booking_details)
+                
+            except KeyboardInterrupt:
+                print("\n🛑 Interrupted by user")
+            except Exception as e:
+                print(f"\n❌ Error: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            # Regular browser automation mode
+            goal = " ".join(sys.argv[1:])
+            run(goal)
     else:
         _print_usage()
 
@@ -350,11 +384,17 @@ def _print_usage() -> None:
     print("=" * 60)
     print("🤖 Browser Automation System")
     print("=" * 60)
-    print("\nUsage: python main.py \"your task here\"")
+    print("\nUsage:")
+    print('  python main.py "your task here"')
+    print("  python main.py --flight-booking")
+    print("  python book_flight.py")
     print("\nExamples:")
     print('  python main.py "Go to YouTube and search for music"')
     print('  python main.py "Go to Google and search for weather"')
     print('  python main.py "Open Wikipedia and search for Python"')
+    print("\nFlight Booking:")
+    print("  python main.py --flight-booking")
+    print("  python book_flight.py")
     print("\nIntegrated Modules:")
     print("  • SafetyPolicy      - Blocks dangerous actions")
     print("  • ConfirmationManager - User approval workflow")
@@ -362,6 +402,7 @@ def _print_usage() -> None:
     print("  • VisualValidator   - Screenshot-based validation")
     print("  • Actions           - Browser action execution")
     print("  • CaptchaSolver     - CAPTCHA challenge handling")
+    print("  • FlightBooking     - Interactive flight booking automation")
 
 
 if __name__ == "__main__":
