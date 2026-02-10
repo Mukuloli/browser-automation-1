@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Automation System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient-flight: linear-gradient(135deg, #06b6d4, #3b82f6);
+            --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.15);
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        body {
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+        }
+
+        /* ===== LAYOUT ===== */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 16px 24px;
+            gap: 16px;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            font-size: 13px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+        }
+
+        .status-dot.running {
+            background: var(--accent-orange);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .status-dot.error {
+            background: var(--accent-red);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            display: flex;
+            gap: 16px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ===== LEFT PANEL (Controls) ===== */
+        .controls-panel {
+            width: 420px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ===== TABS ===== */
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            border-radius: 14px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .tab-btn.active.flight {
+            background: var(--gradient-flight);
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        }
+
+        /* ===== CARD ===== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .card::-webkit-scrollbar { width: 4px; }
+        .card::-webkit-scrollbar-track { background: transparent; }
+        .card::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 4px; }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        /* ===== TAB CONTENT ===== */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ===== FORM ELEMENTS ===== */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-textarea {
+            resize: none;
+            height: 100px;
+        }
+
+        .form-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* ===== RUN BUTTON ===== */
+        .run-btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            background: var(--gradient-primary);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .run-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .run-btn:hover::before {
+            left: 100%;
+        }
+
+        .run-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+        }
+
+        .run-btn:active {
+            transform: translateY(0);
+        }
+
+        .run-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .run-btn.flight-btn {
+            background: var(--gradient-flight);
+        }
+
+        .run-btn.flight-btn:hover {
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.35);
+        }
+
+        /* ===== RIGHT PANEL (Logs) ===== */
+        .logs-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+        }
+
+        .logs-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-glass);
+            flex-shrink: 0;
+        }
+
+        .logs-title {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logs-title .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .clear-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .logs-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 12.5px;
+            line-height: 1.7;
+        }
+
+        .logs-body::-webkit-scrollbar { width: 6px; }
+        .logs-body::-webkit-scrollbar-track { background: transparent; }
+        .logs-body::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 3px; }
+
+        .log-entry {
+            display: flex;
+            gap: 10px;
+            padding: 3px 0;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .log-time {
+            color: var(--text-muted);
+            flex-shrink: 0;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .log-message {
+            color: var(--text-secondary);
+            word-break: break-word;
+        }
+
+        .log-message.highlight {
+            color: var(--accent-cyan);
+        }
+
+        .log-message.success {
+            color: var(--accent-green);
+        }
+
+        .log-message.error {
+            color: var(--accent-red);
+        }
+
+        .empty-logs {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            gap: 12px;
+        }
+
+        .empty-logs-icon {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+
+        .empty-logs-text {
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ===== SPINNER ===== */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .controls-panel {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">🤖</div>
+                <span class="logo-text">Browser Automation</span>
+            </div>
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Ready</span>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <main class="main-content">
+            <!-- LEFT: Controls -->
+            <section class="controls-panel">
+                <!-- Tabs -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-tab="general" onclick="switchTab('general')">
+                        🌐 General
+                    </button>
+                    <button class="tab-btn" data-tab="flight" onclick="switchTab('flight')">
+                        ✈️ Flight Booking
+                    </button>
+                </div>
+
+                <!-- Card -->
+                <div class="card">
+                    <!-- General Automation Tab -->
+                    <div class="tab-content active" id="tab-general">
+                        <div class="card-title">General Browser Automation</div>
+                        <div class="card-subtitle">Enter any task in natural language and the AI will execute it</div>
+
+                        <div class="form-group">
+                            <label class="form-label">Your Task</label>
+                            <textarea class="form-textarea" id="goalInput"
+                                placeholder="e.g. Go to YouTube and search for lofi music..."></textarea>
+                        </div>
+
+                        <button class="run-btn" id="runBtn" onclick="startAutomation()">
+                            🚀 Run Automation
+                        </button>
+                    </div>
+
+                    <!-- Flight Booking Tab -->
+                    <div class="tab-content" id="tab-flight">
+                        <div class="card-title">Flight Booking Automation</div>
+                        <div class="card-subtitle">Fill in your flight details and we'll automate the search</div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">From</label>
+                                <input class="form-input" id="origin" placeholder="e.g. Delhi">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">To</label>
+                                <input class="form-input" id="destination" placeholder="e.g. Mumbai">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Departure</label>
+                                <input class="form-input" type="date" id="departureDate">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Return</label>
+                                <input class="form-input" type="date" id="returnDate" disabled>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Trip Type</label>
+                                <select class="form-select" id="tripType" onchange="toggleReturn()">
+                                    <option value="one-way">One-way</option>
+                                    <option value="round-trip">Round-trip</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Time Preference</label>
+                                <select class="form-select" id="timePref">
+                                    <option value="any">Any Time</option>
+                                    <option value="morning">Morning (6AM–12PM)</option>
+                                    <option value="afternoon">Afternoon (12PM–6PM)</option>
+                                    <option value="evening">Evening (6PM–12AM)</option>
+                                    <option value="night">Night (12AM–6AM)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Adults</label>
+                                <input class="form-input" type="number" id="adults" value="1" min="1" max="9">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Children</label>
+                                <input class="form-input" type="number" id="children" value="0" min="0" max="9">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Infants</label>
+                                <input class="form-input" type="number" id="infants" value="0" min="0" max="9">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Class</label>
+                                <select class="form-select" id="travelClass">
+                                    <option value="economy">Economy</option>
+                                    <option value="premium-economy">Premium Economy</option>
+                                    <option value="business">Business</option>
+                                    <option value="first">First Class</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Flexibility</label>
+                                <select class="form-select" id="flexibility">
+                                    <option value="0">Exact dates</option>
+                                    <option value="1">±1 day</option>
+                                    <option value="2">±2 days</option>
+                                    <option value="3">±3 days</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button class="run-btn flight-btn" id="flightBtn" onclick="startFlightBooking()">
+                            ✈️ Start Flight Search
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT: Logs -->
+            <section class="logs-panel">
+                <div class="logs-header">
+                    <div class="logs-title">
+                        <span class="live-dot"></span>
+                        Live Console
+                    </div>
+                    <button class="clear-btn" onclick="clearLogs()">Clear</button>
+                </div>
+                <div class="logs-body" id="logsBody">
+                    <div class="empty-logs" id="emptyLogs">
+                        <div class="empty-logs-icon">📡</div>
+                        <div class="empty-logs-text">Waiting for automation to start...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // ============================================================
+        // Tab Switching
+        // ============================================================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active', 'flight');
+            });
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.classList.remove('active');
+            });
+
+            const btn = document.querySelector(`[data-tab="${tab}"]`);
+            btn.classList.add('active');
+            if (tab === 'flight') btn.classList.add('flight');
+
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        // ============================================================
+        // Return Date Toggle
+        // ============================================================
+        function toggleReturn() {
+            const tripType = document.getElementById('tripType').value;
+            document.getElementById('returnDate').disabled = tripType !== 'round-trip';
+        }
+
+        // ============================================================
+        // General Automation
+        // ============================================================
+        async function startAutomation() {
+            const goal = document.getElementById('goalInput').value.trim();
+            if (!goal) {
+                shakeInput('goalInput');
+                return;
+            }
+
+            const btn = document.getElementById('runBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Running...';
+
+            try {
+                const res = await fetch('/api/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ goal }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    addLog('❌ ' + (data.error || 'Failed to start'), 'error');
+                    resetBtn(btn, '🚀 Run Automation');
+                }
+            } catch (err) {
+                addLog('❌ Connection error: ' + err.message, 'error');
+                resetBtn(btn, '🚀 Run Automation');
+            }
+        }
+
+        // ============================================================
+        // Flight Booking
+        // ============================================================
+        async function startFlightBooking() {
+            const origin = document.getElementById('origin').value.trim();
+            const destination = document.getElementById('destination').value.trim();
+            const departureDate = document.getElementById('departureDate').value;
+            const tripType = document.getElementById('tripType').value;
+
+            if (!origin || !destination || !departureDate) {
+                if (!origin) shakeInput('origin');
+                if (!destination) shakeInput('destination');
+                if (!departureDate) shakeInput('departureDate');
+                return;
+            }
+
+            const btn = document.getElementById('flightBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Searching...';
+
+            const payload = {
+                origin,
+                destination,
+                departure_date: departureDate,
+                trip_type: tripType,
+                return_date: document.getElementById('returnDate').value || '',
+                time_preference: document.getElementById('timePref').value,
+                adults: document.getElementById('adults').value,
+                children: document.getElementById('children').value,
+                infants: document.getElementById('infants').value,
+                travel_class: document.getElementById('travelClass').value,
+                flexible_dates: document.getElementById('flexibility').value,
+            };
+
+            try {
+                const res = await fetch('/api/flight-booking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    addLog('❌ ' + (data.error || 'Failed to start'), 'error');
+                    resetBtn(btn, '✈️ Start Flight Search', true);
+                }
+            } catch (err) {
+                addLog('❌ Connection error: ' + err.message, 'error');
+                resetBtn(btn, '✈️ Start Flight Search', true);
+            }
+        }
+
+        // ============================================================
+        // Logs
+        // ============================================================
+        function addLog(message, type = '') {
+            const empty = document.getElementById('emptyLogs');
+            if (empty) empty.remove();
+
+            const body = document.getElementById('logsBody');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+
+            const now = new Date();
+            const time = now.toTimeString().slice(0, 8);
+
+            let msgClass = 'log-message';
+            if (type === 'error' || message.includes('❌')) msgClass += ' error';
+            else if (type === 'success' || message.includes('✅')) msgClass += ' success';
+            else if (message.includes('🚀') || message.includes('✈️') || message.includes('📍')) msgClass += ' highlight';
+
+            entry.innerHTML = `<span class="log-time">${time}</span><span class="${msgClass}">${escapeHtml(message)}</span>`;
+            body.appendChild(entry);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function clearLogs() {
+            const body = document.getElementById('logsBody');
+            body.innerHTML = `<div class="empty-logs" id="emptyLogs">
+                <div class="empty-logs-icon">📡</div>
+                <div class="empty-logs-text">Waiting for automation to start...</div>
+            </div>`;
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ============================================================
+        // SSE Log Stream
+        // ============================================================
+        function connectSSE() {
+            const source = new EventSource('/api/logs');
+
+            source.onmessage = function (event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.heartbeat) return;
+                    if (data.message) {
+                        addLog(data.message);
+                    }
+                } catch (e) { /* ignore parse errors */ }
+            };
+
+            source.onerror = function () {
+                source.close();
+                setTimeout(connectSSE, 3000);
+            };
+        }
+
+        // ============================================================
+        // Status Polling
+        // ============================================================
+        async function pollStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+
+                const dot = document.getElementById('statusDot');
+                const text = document.getElementById('statusText');
+
+                dot.className = 'status-dot';
+                if (data.state === 'running') {
+                    dot.classList.add('running');
+                    text.textContent = data.message;
+                } else if (data.state === 'error') {
+                    dot.classList.add('error');
+                    text.textContent = data.message;
+                    resetAllBtns();
+                } else if (data.state === 'completed') {
+                    text.textContent = data.message;
+                    resetAllBtns();
+                } else {
+                    text.textContent = 'Ready';
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        // ============================================================
+        // Helpers
+        // ============================================================
+        function shakeInput(id) {
+            const el = document.getElementById(id);
+            el.style.borderColor = 'var(--accent-red)';
+            el.style.animation = 'shake 0.4s ease';
+            setTimeout(() => {
+                el.style.borderColor = '';
+                el.style.animation = '';
+            }, 500);
+        }
+
+        function resetBtn(btn, label, isFlight = false) {
+            btn.disabled = false;
+            btn.innerHTML = label;
+        }
+
+        function resetAllBtns() {
+            const runBtn = document.getElementById('runBtn');
+            const flightBtn = document.getElementById('flightBtn');
+            runBtn.disabled = false;
+            runBtn.innerHTML = '🚀 Run Automation';
+            flightBtn.disabled = false;
+            flightBtn.innerHTML = '✈️ Start Flight Search';
+        }
+
+        // Shake animation
+        const style = document.createElement('style');
+        style.textContent = `@keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+            75% { transform: translateX(-4px); }
+        }`;
+        document.head.appendChild(style);
+
+        // Set default departure date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('departureDate').value = tomorrow.toISOString().split('T')[0];
+
+        // ============================================================
+        // Initialize
+        // ============================================================
+        connectSSE();
+        setInterval(pollStatus, 2000);
+    </script>
+</body>
+</html>
