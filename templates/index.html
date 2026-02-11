@@ -1,55 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browser Automation System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>AI Flight Assistant</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         :root {
-            --bg-primary: #0a0e1a;
-            --bg-secondary: #111827;
-            --bg-card: rgba(17, 24, 39, 0.7);
-            --bg-glass: rgba(255, 255, 255, 0.03);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --accent-blue: #3b82f6;
-            --accent-purple: #8b5cf6;
-            --accent-cyan: #06b6d4;
-            --accent-green: #10b981;
-            --accent-orange: #f59e0b;
-            --accent-red: #ef4444;
-            --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            --gradient-flight: linear-gradient(135deg, #06b6d4, #3b82f6);
-            --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.15);
+            --bg-void: #050510;
+            --bg-deep: #0a0a1a;
+            --bg-card: rgba(12, 12, 30, 0.65);
+            --bg-input: rgba(255, 255, 255, 0.035);
+            --bg-input-hover: rgba(255, 255, 255, 0.055);
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --border-focus: rgba(99, 102, 241, 0.5);
+            --text-100: #f0f0ff;
+            --text-200: #c0c0d8;
+            --text-300: #8888a8;
+            --text-400: #55556a;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --cyan: #22d3ee;
+            --cyan-glow: rgba(34, 211, 238, 0.2);
+            --green: #34d399;
+            --green-glow: rgba(52, 211, 153, 0.2);
+            --orange: #fb923c;
+            --red: #f87171;
+            --radius: 14px;
+            --radius-sm: 10px;
+            --user-bubble: linear-gradient(135deg, #6366f1, #7c3aed);
+            --ai-bubble: rgba(255, 255, 255, 0.05);
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             overflow: hidden;
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-void);
+            color: var(--text-100);
+            -webkit-font-smoothing: antialiased;
         }
 
-        body {
-            background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+        /* ===== ANIMATED MESH BACKGROUND ===== */
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-mesh .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.35;
+            animation: orbFloat 20s ease-in-out infinite alternate;
+        }
+
+        .bg-mesh .orb:nth-child(1) {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.35), transparent 70%);
+            top: -10%;
+            left: -5%;
+            animation-duration: 25s;
+        }
+
+        .bg-mesh .orb:nth-child(2) {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(34, 211, 238, 0.25), transparent 70%);
+            bottom: -15%;
+            right: -5%;
+            animation-duration: 30s;
+            animation-delay: -5s;
+        }
+
+        .bg-mesh .orb:nth-child(3) {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 70%);
+            top: 50%;
+            left: 40%;
+            animation-duration: 22s;
+            animation-delay: -10s;
+        }
+
+        @keyframes orbFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(40px, -30px) scale(1.05);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.95);
+            }
+
+            100% {
+                transform: translate(30px, -10px) scale(1.02);
+            }
+        }
+
+        .bg-mesh::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            opacity: 0.5;
+            pointer-events: none;
         }
 
         /* ===== LAYOUT ===== */
-        .app-container {
+        .app {
+            position: relative;
+            z-index: 1;
             display: flex;
             flex-direction: column;
             height: 100vh;
-            padding: 16px 24px;
-            gap: 16px;
+            padding: 16px 20px;
+            gap: 14px;
         }
 
         /* ===== HEADER ===== */
@@ -60,746 +146,852 @@
             flex-shrink: 0;
         }
 
-        .logo {
+        .brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
-        .logo-icon {
+        .brand-icon {
             width: 42px;
             height: 42px;
             border-radius: 12px;
-            background: var(--gradient-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            display: grid;
+            place-items: center;
             font-size: 20px;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 24px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
 
-        .logo-text {
+        .brand-name {
             font-size: 20px;
-            font-weight: 700;
-            background: var(--gradient-primary);
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, var(--text-100) 40%, var(--accent-light));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .status-badge {
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chip {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 16px;
-            border-radius: 50px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            font-size: 13px;
-            font-weight: 500;
-            backdrop-filter: blur(10px);
+            padding: 7px 16px;
+            border-radius: 100px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-200);
+            transition: all 0.3s;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
+        .chip-dot {
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
-            background: var(--accent-green);
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green-glow);
+            transition: all 0.3s;
         }
 
-        .status-dot.running {
-            background: var(--accent-orange);
-            animation: pulse 1.5s ease-in-out infinite;
+        .chip-dot.running {
+            background: var(--orange);
+            box-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+            animation: blink 1.4s ease-in-out infinite;
         }
 
-        .status-dot.error {
-            background: var(--accent-red);
+        .chip-dot.error {
+            background: var(--red);
+            box-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.3); }
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.35;
+            }
         }
 
-        /* ===== MAIN CONTENT ===== */
-        .main-content {
-            display: flex;
-            gap: 16px;
+        .reset-btn {
+            padding: 7px 16px;
+            border-radius: 100px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-300);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-100);
+            border-color: var(--border-hover);
+        }
+
+        /* ===== MAIN GRID ===== */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 14px;
             flex: 1;
             min-height: 0;
         }
 
-        /* ===== LEFT PANEL (Controls) ===== */
-        .controls-panel {
-            width: 420px;
-            flex-shrink: 0;
+        /* ===== GLASS CARD ===== */
+        .glass {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            backdrop-filter: blur(24px) saturate(1.3);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        /* ===== CHAT PANEL ===== */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 20px;
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
 
-        /* ===== TABS ===== */
-        .tab-bar {
-            display: flex;
-            gap: 4px;
-            padding: 4px;
-            border-radius: 14px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            backdrop-filter: blur(10px);
+        .chat-messages::-webkit-scrollbar {
+            width: 5px;
         }
 
-        .tab-btn {
-            flex: 1;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 10px;
+        .chat-messages::-webkit-scrollbar-track {
             background: transparent;
-            color: var(--text-secondary);
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
 
-        .tab-btn:hover {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .tab-btn.active {
-            background: var(--gradient-primary);
-            color: white;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-        }
-
-        .tab-btn.active.flight {
-            background: var(--gradient-flight);
-            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
-        }
-
-        /* ===== CARD ===== */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 24px;
-            backdrop-filter: blur(20px);
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .card::-webkit-scrollbar { width: 4px; }
-        .card::-webkit-scrollbar-track { background: transparent; }
-        .card::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 4px; }
-
-        .card-title {
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .card-subtitle {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-
-        /* ===== TAB CONTENT ===== */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* ===== FORM ELEMENTS ===== */
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-input, .form-select, .form-textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 10px;
-            border: 1px solid var(--border-glass);
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            outline: none;
-        }
-
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        .chat-messages::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
         }
 
-        .form-input::placeholder, .form-textarea::placeholder {
-            color: var(--text-muted);
-        }
-
-        .form-textarea {
-            resize: none;
-            height: 100px;
-        }
-
-        .form-select option {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        .form-row {
+        /* Message bubbles */
+        .msg {
             display: flex;
             gap: 12px;
+            max-width: 80%;
+            animation: msgIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .form-row .form-group {
-            flex: 1;
+        .msg.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
         }
 
-        /* ===== RUN BUTTON ===== */
-        .run-btn {
-            width: 100%;
-            padding: 14px 24px;
-            border: none;
-            border-radius: 12px;
-            background: var(--gradient-primary);
+        .msg.ai {
+            align-self: flex-start;
+        }
+
+        @keyframes msgIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .msg-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .msg.user .msg-avatar {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .msg.ai .msg-avatar {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .msg-bubble {
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 13.5px;
+            line-height: 1.65;
+            word-break: break-word;
+        }
+
+        .msg.user .msg-bubble {
+            background: var(--user-bubble);
             color: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 15px;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .msg.ai .msg-bubble {
+            background: var(--ai-bubble);
+            color: var(--text-200);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg-bubble strong {
+            color: var(--text-100);
             font-weight: 700;
+        }
+
+        .msg-bubble em {
+            color: var(--accent-light);
+            font-style: italic;
+        }
+
+        /* Screenshot in chat */
+        .msg-screenshot {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.2s;
+        }
+
+        .msg-screenshot:hover {
+            transform: scale(1.02);
+        }
+
+        /* Typing indicator */
+        .typing {
             display: flex;
+            gap: 5px;
+            padding: 14px 18px;
             align-items: center;
-            justify-content: center;
+        }
+
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--text-400);
+            animation: typingBounce 1.4s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes typingBounce {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+
+            30% {
+                transform: translateY(-6px);
+                opacity: 1;
+            }
+        }
+
+        /* Chat input */
+        .chat-input-area {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .chat-input-wrap {
+            display: flex;
             gap: 10px;
-            margin-top: 8px;
-            position: relative;
-            overflow: hidden;
+            align-items: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 6px 6px 6px 16px;
+            transition: all 0.25s;
         }
 
-        .run-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-            transition: left 0.5s ease;
+        .chat-input-wrap:focus-within {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+            background: var(--bg-input-hover);
         }
 
-        .run-btn:hover::before {
-            left: 100%;
+        .chat-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: var(--text-100);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            min-height: 20px;
         }
 
-        .run-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+        .chat-input::placeholder {
+            color: var(--text-400);
+            font-weight: 400;
         }
 
-        .run-btn:active {
-            transform: translateY(0);
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: all 0.25s;
+            flex-shrink: 0;
         }
 
-        .run-btn:disabled {
-            opacity: 0.5;
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.4;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: none !important;
         }
 
-        .run-btn.flight-btn {
-            background: var(--gradient-flight);
-        }
-
-        .run-btn.flight-btn:hover {
-            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.35);
-        }
-
-        /* ===== RIGHT PANEL (Logs) ===== */
-        .logs-panel {
-            flex: 1;
+        /* ===== LOG PANEL ===== */
+        .log-panel {
             display: flex;
             flex-direction: column;
-            background: var(--bg-card);
-            border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
             overflow: hidden;
         }
 
-        .logs-header {
+        .log-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border-glass);
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
 
-        .logs-title {
-            font-size: 14px;
+        .log-title {
+            font-size: 12px;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 8px;
+            letter-spacing: 0.3px;
         }
 
-        .logs-title .live-dot {
-            width: 6px;
-            height: 6px;
+        .log-title .pulse-ring {
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
-            background: var(--accent-green);
-            animation: pulse 2s ease-in-out infinite;
+            background: var(--green);
+            position: relative;
         }
 
-        .clear-btn {
-            padding: 6px 14px;
-            border: 1px solid var(--border-glass);
+        .log-title .pulse-ring::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 1.5px solid var(--green);
+            animation: ringPulse 2s ease-out infinite;
+        }
+
+        @keyframes ringPulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(2.2);
+                opacity: 0;
+            }
+        }
+
+        .clear-log-btn {
+            padding: 5px 12px;
+            border: 1px solid var(--border);
             border-radius: 8px;
             background: transparent;
-            color: var(--text-secondary);
+            color: var(--text-300);
             font-family: 'Inter', sans-serif;
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
 
-        .clear-btn:hover {
+        .clear-log-btn:hover {
             background: rgba(255, 255, 255, 0.05);
-            color: var(--text-primary);
+            color: var(--text-100);
         }
 
-        .logs-body {
+        .log-body {
             flex: 1;
             overflow-y: auto;
-            padding: 16px 20px;
-            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-            font-size: 12.5px;
-            line-height: 1.7;
+            padding: 14px 18px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            line-height: 1.8;
         }
 
-        .logs-body::-webkit-scrollbar { width: 6px; }
-        .logs-body::-webkit-scrollbar-track { background: transparent; }
-        .logs-body::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 3px; }
+        .log-body::-webkit-scrollbar {
+            width: 4px;
+        }
 
-        .log-entry {
+        .log-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .log-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+        }
+
+        .log-line {
             display: flex;
             gap: 10px;
             padding: 3px 0;
-            animation: fadeInUp 0.3s ease;
+            animation: logSlide 0.3s ease;
         }
 
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes logSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
-        .log-time {
-            color: var(--text-muted);
+        .log-ts {
+            color: var(--text-400);
             flex-shrink: 0;
-            font-size: 11px;
-            margin-top: 2px;
+            font-size: 10.5px;
+            margin-top: 1px;
         }
 
-        .log-message {
-            color: var(--text-secondary);
+        .log-msg {
+            color: var(--text-200);
             word-break: break-word;
         }
 
-        .log-message.highlight {
-            color: var(--accent-cyan);
+        .log-msg.info {
+            color: var(--cyan);
         }
 
-        .log-message.success {
-            color: var(--accent-green);
+        .log-msg.ok {
+            color: var(--green);
         }
 
-        .log-message.error {
-            color: var(--accent-red);
+        .log-msg.err {
+            color: var(--red);
         }
 
-        .empty-logs {
+        .log-msg.warn {
+            color: var(--orange);
+        }
+
+        .log-empty {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: var(--text-muted);
             gap: 12px;
+            color: var(--text-400);
         }
 
-        .empty-logs-icon {
-            font-size: 48px;
-            opacity: 0.3;
+        .log-empty-icon {
+            font-size: 40px;
+            opacity: 0.2;
         }
 
-        .empty-logs-text {
-            font-size: 14px;
+        .log-empty-text {
             font-family: 'Inter', sans-serif;
-        }
-
-        /* ===== SPINNER ===== */
-        .spinner {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+            font-size: 12px;
+            font-weight: 500;
         }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 900px) {
-            .main-content {
-                flex-direction: column;
+            .main {
+                grid-template-columns: 1fr;
             }
-            .controls-panel {
-                width: 100%;
+
+            .log-panel {
+                min-height: 250px;
             }
         }
     </style>
 </head>
+
 <body>
-    <div class="app-container">
-        <!-- HEADER -->
+    <!-- Background -->
+    <div class="bg-mesh">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <div class="app">
+        <!-- Header -->
         <header class="header">
-            <div class="logo">
-                <div class="logo-icon">🤖</div>
-                <span class="logo-text">Browser Automation</span>
+            <div class="brand">
+                <div class="brand-icon">✈️</div>
+                <div>
+                    <div class="brand-name">AI Flight Assistant</div>
+                </div>
             </div>
-            <div class="status-badge" id="statusBadge">
-                <span class="status-dot" id="statusDot"></span>
-                <span id="statusText">Ready</span>
+            <div class="header-actions">
+                <div class="chip" id="statusChip">
+                    <span class="chip-dot" id="statusDot"></span>
+                    <span id="statusText">Ready</span>
+                </div>
+                <button class="reset-btn" onclick="resetChat()">🔄 New Chat</button>
             </div>
         </header>
 
-        <!-- MAIN -->
-        <main class="main-content">
-            <!-- LEFT: Controls -->
-            <section class="controls-panel">
-                <!-- Tabs -->
-                <div class="tab-bar">
-                    <button class="tab-btn active" data-tab="general" onclick="switchTab('general')">
-                        🌐 General
-                    </button>
-                    <button class="tab-btn" data-tab="flight" onclick="switchTab('flight')">
-                        ✈️ Flight Booking
-                    </button>
+        <!-- Main Grid -->
+        <div class="main">
+            <!-- Chat Panel -->
+            <div class="glass chat-panel">
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages rendered here -->
                 </div>
 
-                <!-- Card -->
-                <div class="card">
-                    <!-- General Automation Tab -->
-                    <div class="tab-content active" id="tab-general">
-                        <div class="card-title">General Browser Automation</div>
-                        <div class="card-subtitle">Enter any task in natural language and the AI will execute it</div>
-
-                        <div class="form-group">
-                            <label class="form-label">Your Task</label>
-                            <textarea class="form-textarea" id="goalInput"
-                                placeholder="e.g. Go to YouTube and search for lofi music..."></textarea>
-                        </div>
-
-                        <button class="run-btn" id="runBtn" onclick="startAutomation()">
-                            🚀 Run Automation
-                        </button>
-                    </div>
-
-                    <!-- Flight Booking Tab -->
-                    <div class="tab-content" id="tab-flight">
-                        <div class="card-title">Flight Booking Automation</div>
-                        <div class="card-subtitle">Fill in your flight details and we'll automate the search</div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">From</label>
-                                <input class="form-input" id="origin" placeholder="e.g. Delhi">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">To</label>
-                                <input class="form-input" id="destination" placeholder="e.g. Mumbai">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Departure</label>
-                                <input class="form-input" type="date" id="departureDate">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Return</label>
-                                <input class="form-input" type="date" id="returnDate" disabled>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Trip Type</label>
-                                <select class="form-select" id="tripType" onchange="toggleReturn()">
-                                    <option value="one-way">One-way</option>
-                                    <option value="round-trip">Round-trip</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Time Preference</label>
-                                <select class="form-select" id="timePref">
-                                    <option value="any">Any Time</option>
-                                    <option value="morning">Morning (6AM–12PM)</option>
-                                    <option value="afternoon">Afternoon (12PM–6PM)</option>
-                                    <option value="evening">Evening (6PM–12AM)</option>
-                                    <option value="night">Night (12AM–6AM)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Adults</label>
-                                <input class="form-input" type="number" id="adults" value="1" min="1" max="9">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Children</label>
-                                <input class="form-input" type="number" id="children" value="0" min="0" max="9">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Infants</label>
-                                <input class="form-input" type="number" id="infants" value="0" min="0" max="9">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Class</label>
-                                <select class="form-select" id="travelClass">
-                                    <option value="economy">Economy</option>
-                                    <option value="premium-economy">Premium Economy</option>
-                                    <option value="business">Business</option>
-                                    <option value="first">First Class</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Flexibility</label>
-                                <select class="form-select" id="flexibility">
-                                    <option value="0">Exact dates</option>
-                                    <option value="1">±1 day</option>
-                                    <option value="2">±2 days</option>
-                                    <option value="3">±3 days</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <button class="run-btn flight-btn" id="flightBtn" onclick="startFlightBooking()">
-                            ✈️ Start Flight Search
-                        </button>
+                <div class="chat-input-area">
+                    <div class="chat-input-wrap">
+                        <input type="text" class="chat-input" id="chatInput"
+                            placeholder="Tell me where you want to fly..." autocomplete="off"
+                            onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }">
+                        <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- RIGHT: Logs -->
-            <section class="logs-panel">
-                <div class="logs-header">
-                    <div class="logs-title">
-                        <span class="live-dot"></span>
-                        Live Console
+            <!-- Log Panel -->
+            <div class="glass log-panel">
+                <div class="log-header">
+                    <div class="log-title">
+                        <span class="pulse-ring"></span>
+                        Browser Activity
                     </div>
-                    <button class="clear-btn" onclick="clearLogs()">Clear</button>
+                    <button class="clear-log-btn" onclick="clearLogs()">Clear</button>
                 </div>
-                <div class="logs-body" id="logsBody">
-                    <div class="empty-logs" id="emptyLogs">
-                        <div class="empty-logs-icon">📡</div>
-                        <div class="empty-logs-text">Waiting for automation to start...</div>
+                <div class="log-body" id="logBody">
+                    <div class="log-empty">
+                        <div class="log-empty-icon">🌐</div>
+                        <div class="log-empty-text">Browser logs will appear here</div>
                     </div>
                 </div>
-            </section>
-        </main>
+            </div>
+        </div>
     </div>
 
     <script>
         // ============================================================
-        // Tab Switching
+        // State
         // ============================================================
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('active', 'flight');
-            });
-            document.querySelectorAll('.tab-content').forEach(c => {
-                c.classList.remove('active');
-            });
-
-            const btn = document.querySelector(`[data-tab="${tab}"]`);
-            btn.classList.add('active');
-            if (tab === 'flight') btn.classList.add('flight');
-
-            document.getElementById(`tab-${tab}`).classList.add('active');
-        }
+        let sending = false;
+        let logStarted = false;
 
         // ============================================================
-        // Return Date Toggle
+        // Initialization
         // ============================================================
-        function toggleReturn() {
-            const tripType = document.getElementById('tripType').value;
-            document.getElementById('returnDate').disabled = tripType !== 'round-trip';
-        }
-
-        // ============================================================
-        // General Automation
-        // ============================================================
-        async function startAutomation() {
-            const goal = document.getElementById('goalInput').value.trim();
-            if (!goal) {
-                shakeInput('goalInput');
-                return;
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load greeting
+            try {
+                const res = await fetch('/api/chat/greeting');
+                const greeting = await res.json();
+                appendMessage('ai', greeting.text);
+            } catch (e) {
+                appendMessage('ai', 'Hey there! 👋 Tell me what you need help with.');
             }
 
-            const btn = document.getElementById('runBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Running...';
+            // Start log stream
+            startLogStream();
+
+            // Start status polling
+            setInterval(pollStatus, 2000);
+
+            // Start workflow message polling
+            setInterval(pollWorkflowMessage, 1500);
+
+            // Focus input
+            document.getElementById('chatInput').focus();
+        });
+
+        // ============================================================
+        // Chat
+        // ============================================================
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || sending) return;
+
+            // Show user message
+            appendMessage('user', text);
+            input.value = '';
+
+            // Show typing indicator
+            const typingEl = showTyping();
+            sending = true;
+            updateSendBtn();
 
             try {
-                const res = await fetch('/api/run', {
+                const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ goal }),
+                    body: JSON.stringify({ message: text }),
                 });
+
                 const data = await res.json();
-                if (!res.ok) {
-                    addLog('❌ ' + (data.error || 'Failed to start'), 'error');
-                    resetBtn(btn, '🚀 Run Automation');
+
+                // Remove typing
+                typingEl.remove();
+
+                if (data.error) {
+                    appendMessage('ai', '⚠️ ' + data.error);
+                } else {
+                    appendMessage('ai', data.text);
                 }
             } catch (err) {
-                addLog('❌ Connection error: ' + err.message, 'error');
-                resetBtn(btn, '🚀 Run Automation');
+                typingEl.remove();
+                appendMessage('ai', '❌ Connection error. Is the server running?');
             }
+
+            sending = false;
+            updateSendBtn();
+            input.focus();
+        }
+
+        function appendMessage(role, text) {
+            const container = document.getElementById('chatMessages');
+
+            const msg = document.createElement('div');
+            msg.className = `msg ${role}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'msg-avatar';
+            avatar.textContent = role === 'user' ? '👤' : '🤖';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'msg-bubble';
+            bubble.innerHTML = formatText(text);
+
+            msg.appendChild(avatar);
+            msg.appendChild(bubble);
+            container.appendChild(msg);
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTyping() {
+            const container = document.getElementById('chatMessages');
+
+            const msg = document.createElement('div');
+            msg.className = 'msg ai';
+            msg.id = 'typingIndicator';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'msg-avatar';
+            avatar.textContent = '🤖';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'msg-bubble typing';
+            bubble.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+            msg.appendChild(avatar);
+            msg.appendChild(bubble);
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+
+            return msg;
+        }
+
+        function formatText(text) {
+            if (!text) return '';
+            // Convert markdown-like formatting
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function updateSendBtn() {
+            document.getElementById('sendBtn').disabled = sending;
+        }
+
+        async function resetChat() {
+            try {
+                const res = await fetch('/api/chat/reset', { method: 'POST' });
+                const data = await res.json();
+
+                // Clear chat
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = '';
+
+                // Show new greeting
+                if (data.greeting) {
+                    appendMessage('ai', data.greeting.text);
+                }
+            } catch (e) {
+                console.error('Reset failed:', e);
+            }
+
+            document.getElementById('chatInput').focus();
         }
 
         // ============================================================
-        // Flight Booking
+        // Log Stream (SSE)
         // ============================================================
-        async function startFlightBooking() {
-            const origin = document.getElementById('origin').value.trim();
-            const destination = document.getElementById('destination').value.trim();
-            const departureDate = document.getElementById('departureDate').value;
-            const tripType = document.getElementById('tripType').value;
+        function startLogStream() {
+            const evtSource = new EventSource('/api/logs');
 
-            if (!origin || !destination || !departureDate) {
-                if (!origin) shakeInput('origin');
-                if (!destination) shakeInput('destination');
-                if (!departureDate) shakeInput('departureDate');
-                return;
-            }
-
-            const btn = document.getElementById('flightBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Searching...';
-
-            const payload = {
-                origin,
-                destination,
-                departure_date: departureDate,
-                trip_type: tripType,
-                return_date: document.getElementById('returnDate').value || '',
-                time_preference: document.getElementById('timePref').value,
-                adults: document.getElementById('adults').value,
-                children: document.getElementById('children').value,
-                infants: document.getElementById('infants').value,
-                travel_class: document.getElementById('travelClass').value,
-                flexible_dates: document.getElementById('flexibility').value,
+            evtSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.heartbeat) return;
+                    addLogLine(data.time, data.message);
+                } catch (e) { }
             };
 
-            try {
-                const res = await fetch('/api/flight-booking', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                    addLog('❌ ' + (data.error || 'Failed to start'), 'error');
-                    resetBtn(btn, '✈️ Start Flight Search', true);
-                }
-            } catch (err) {
-                addLog('❌ Connection error: ' + err.message, 'error');
-                resetBtn(btn, '✈️ Start Flight Search', true);
-            }
+            evtSource.onerror = () => {
+                setTimeout(startLogStream, 3000);
+            };
         }
 
-        // ============================================================
-        // Logs
-        // ============================================================
-        function addLog(message, type = '') {
-            const empty = document.getElementById('emptyLogs');
+        function addLogLine(time, message) {
+            const body = document.getElementById('logBody');
+
+            // Remove empty state
+            const empty = body.querySelector('.log-empty');
             if (empty) empty.remove();
 
-            const body = document.getElementById('logsBody');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
+            const line = document.createElement('div');
+            line.className = 'log-line';
 
-            const now = new Date();
-            const time = now.toTimeString().slice(0, 8);
+            const ts = document.createElement('span');
+            ts.className = 'log-ts';
+            ts.textContent = time;
 
-            let msgClass = 'log-message';
-            if (type === 'error' || message.includes('❌')) msgClass += ' error';
-            else if (type === 'success' || message.includes('✅')) msgClass += ' success';
-            else if (message.includes('🚀') || message.includes('✈️') || message.includes('📍')) msgClass += ' highlight';
+            const msg = document.createElement('span');
+            msg.className = 'log-msg';
 
-            entry.innerHTML = `<span class="log-time">${time}</span><span class="${msgClass}">${escapeHtml(message)}</span>`;
-            body.appendChild(entry);
+            // Color based on content
+            if (message.includes('✅') || message.includes('✓')) msg.classList.add('ok');
+            else if (message.includes('❌') || message.includes('Error')) msg.classList.add('err');
+            else if (message.includes('⚠️') || message.includes('🛑')) msg.classList.add('warn');
+            else if (message.includes('🚀') || message.includes('✈️') || message.includes('🤖')) msg.classList.add('info');
+
+            msg.textContent = message;
+
+            line.appendChild(ts);
+            line.appendChild(msg);
+            body.appendChild(line);
             body.scrollTop = body.scrollHeight;
         }
 
         function clearLogs() {
-            const body = document.getElementById('logsBody');
-            body.innerHTML = `<div class="empty-logs" id="emptyLogs">
-                <div class="empty-logs-icon">📡</div>
-                <div class="empty-logs-text">Waiting for automation to start...</div>
-            </div>`;
-        }
-
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
+            const body = document.getElementById('logBody');
+            body.innerHTML = '<div class="log-empty"><div class="log-empty-icon">🌐</div><div class="log-empty-text">Browser logs will appear here</div></div>';
         }
 
         // ============================================================
-        // SSE Log Stream
+        // Workflow Message Polling
         // ============================================================
-        function connectSSE() {
-            const source = new EventSource('/api/logs');
+        async function pollWorkflowMessage() {
+            try {
+                const res = await fetch('/api/workflow-message');
+                const data = await res.json();
+                if (!data) return;
 
-            source.onmessage = function (event) {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.heartbeat) return;
-                    if (data.message) {
-                        addLog(data.message);
+                if (data.type === 'workflow_question') {
+                    // Show the question as an AI message
+                    appendMessage('ai', data.text);
+
+                    // If there's a screenshot, show it
+                    if (data.screenshot) {
+                        appendScreenshot(data.screenshot);
                     }
-                } catch (e) { /* ignore parse errors */ }
-            };
 
-            source.onerror = function () {
-                source.close();
-                setTimeout(connectSSE, 3000);
-            };
+                    // Update placeholder to hint the user needs to respond
+                    document.getElementById('chatInput').placeholder = 'Type your choice (e.g., "option 1", "the cheapest one")...';
+                    document.getElementById('chatInput').focus();
+                }
+            } catch (e) { }
+        }
+
+        function appendScreenshot(base64Data) {
+            const container = document.getElementById('chatMessages');
+
+            const msg = document.createElement('div');
+            msg.className = 'msg ai';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'msg-avatar';
+            avatar.textContent = '📸';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'msg-bubble';
+
+            const img = document.createElement('img');
+            img.className = 'msg-screenshot';
+            img.src = 'data:image/png;base64,' + base64Data;
+            img.alt = 'Flight search results';
+            img.onclick = () => window.open(img.src, '_blank');
+
+            bubble.appendChild(img);
+            msg.appendChild(avatar);
+            msg.appendChild(bubble);
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
         }
 
         // ============================================================
@@ -809,74 +1001,26 @@
             try {
                 const res = await fetch('/api/status');
                 const data = await res.json();
-
                 const dot = document.getElementById('statusDot');
                 const text = document.getElementById('statusText');
 
-                dot.className = 'status-dot';
+                dot.className = 'chip-dot';
                 if (data.state === 'running') {
                     dot.classList.add('running');
                     text.textContent = data.message;
                 } else if (data.state === 'error') {
                     dot.classList.add('error');
                     text.textContent = data.message;
-                    resetAllBtns();
                 } else if (data.state === 'completed') {
                     text.textContent = data.message;
-                    resetAllBtns();
+                    // Reset input placeholder
+                    document.getElementById('chatInput').placeholder = 'Tell me where you want to fly...';
                 } else {
                     text.textContent = 'Ready';
                 }
-            } catch (e) { /* ignore */ }
+            } catch (e) { }
         }
-
-        // ============================================================
-        // Helpers
-        // ============================================================
-        function shakeInput(id) {
-            const el = document.getElementById(id);
-            el.style.borderColor = 'var(--accent-red)';
-            el.style.animation = 'shake 0.4s ease';
-            setTimeout(() => {
-                el.style.borderColor = '';
-                el.style.animation = '';
-            }, 500);
-        }
-
-        function resetBtn(btn, label, isFlight = false) {
-            btn.disabled = false;
-            btn.innerHTML = label;
-        }
-
-        function resetAllBtns() {
-            const runBtn = document.getElementById('runBtn');
-            const flightBtn = document.getElementById('flightBtn');
-            runBtn.disabled = false;
-            runBtn.innerHTML = '🚀 Run Automation';
-            flightBtn.disabled = false;
-            flightBtn.innerHTML = '✈️ Start Flight Search';
-        }
-
-        // Shake animation
-        const style = document.createElement('style');
-        style.textContent = `@keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-6px); }
-            50% { transform: translateX(6px); }
-            75% { transform: translateX(-4px); }
-        }`;
-        document.head.appendChild(style);
-
-        // Set default departure date to tomorrow
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        document.getElementById('departureDate').value = tomorrow.toISOString().split('T')[0];
-
-        // ============================================================
-        // Initialize
-        // ============================================================
-        connectSSE();
-        setInterval(pollStatus, 2000);
     </script>
 </body>
+
 </html>

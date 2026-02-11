@@ -40,6 +40,7 @@ from .confirmation import ConfirmationManager
 from .helpers import print_header, print_step, denormalize_x, denormalize_y
 from .image_optimizer import optimize_screenshot, get_image_info
 from .dom_extractor import format_dom_hints, extract_interactive_elements
+from .chat_agent import ChatAgent
 
 
 # =============================================================================
@@ -220,4 +221,6 @@ __all__ = [
     "get_image_info",
     "format_dom_hints",
     "extract_interactive_elements",
+    # Chat Agent
+    "ChatAgent",
 ]
