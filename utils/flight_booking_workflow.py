@@ -5,6 +5,7 @@ Interactive workflow: searches flights, then asks the user via chat
 which flight to select (sends screenshot + description of options).
 """
 
+import os
 import time
 import base64
 from typing import Callable, Dict, Optional
@@ -42,6 +43,7 @@ class FlightBookingWorkflow:
 
         try:
             self._launch_browser()
+            self._pre_authenticate()
             self._navigate_to_booking_site()
             self._fill_search_form()
             self._wait_for_results()
@@ -68,6 +70,46 @@ class FlightBookingWorkflow:
             viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT}
         )
         self.page = context.new_page()
+
+    def _pre_authenticate(self):
+        """
+        Open Google sign-in so user can log in before flight search.
+        This prevents permission errors on airline booking pages.
+        """
+        print("🔐 Opening Google sign-in...")
+
+        try:
+            self.page.goto("https://accounts.google.com/signin", timeout=30000)
+            self.page.wait_for_load_state("domcontentloaded")
+            time.sleep(3)
+        except Exception as e:
+            print(f"  ⚠️ Could not load Google sign-in: {e}")
+            print("  Continuing anyway...")
+            return
+
+        if self.ask_user_fn:
+            screenshot_bytes = self.page.screenshot(type="png")
+            screenshot_b64 = base64.b64encode(screenshot_bytes).decode("utf-8")
+
+            user_response = self.ask_user_fn(
+                "🔐 **Please sign in to Google**\n\n"
+                "I've opened the Google sign-in page in the browser. "
+                "Please **sign in with your Google account** in the browser window.\n\n"
+                "This is needed so the flight booking works smoothly.\n\n"
+                "👉 Type **'done'** when you're signed in, or **'skip'** to continue without signing in.",
+                screenshot_b64,
+            )
+
+            if user_response and user_response.strip().lower() == "skip":
+                print("  ⏭️ User skipped sign-in, continuing...")
+            else:
+                print("  ✅ User confirmed sign-in, continuing...")
+        else:
+            print("  ℹ️ Please sign in to Google manually in the browser.")
+            print("  Waiting 30 seconds...")
+            time.sleep(30)
+
+        print("  ✓ Google sign-in step complete")
 
     def _navigate_to_booking_site(self):
         print("📍 Navigating to Google Flights...")
@@ -249,6 +291,63 @@ Click on the flight row/card to select it."""
             contents.append(Content(role="user", parts=resp_parts))
             time.sleep(1)
 
+    def _detect_access_error(self) -> bool:
+        """
+        Check if the current page shows a permission/access denied error.
+        Returns True if an access error is detected.
+        """
+        try:
+            page_text = self.page.inner_text("body")[:2000].lower()
+            error_indicators = [
+                "you don't have permission",
+                "access denied",
+                "403 forbidden",
+                "not authorized",
+                "permission denied",
+                "reference #18",  # Akamai/CDN block pattern
+                "errors.edgesuite.net",
+            ]
+            return any(indicator in page_text for indicator in error_indicators)
+        except Exception:
+            return False
+
+    def _handle_access_error(self) -> bool:
+        """
+        If an access error is detected, ask user to sign in and retry.
+        Returns True if error was handled, False if no error.
+        """
+        if not self._detect_access_error():
+            return False
+
+        print("  🚫 Access denied detected! Asking user to sign in...")
+
+        if self.ask_user_fn:
+            screenshot_bytes = self.page.screenshot(type="png")
+            screenshot_b64 = base64.b64encode(screenshot_bytes).decode("utf-8")
+
+            self.ask_user_fn(
+                "🚫 **Access Denied!**\n\n"
+                "The airline website is blocking access because you're not signed in.\n\n"
+                "Please do the following in the browser window:\n"
+                "1. Go to the airline website and **sign in** with your account\n"
+                "2. Come back here and type **'done'** when you're signed in\n\n"
+                "I'll retry the booking after you sign in.",
+                screenshot_b64,
+            )
+            print("  ✅ User confirmed sign-in, retrying...")
+
+            # Go back and retry
+            try:
+                self.page.go_back()
+                time.sleep(3)
+            except Exception:
+                pass
+        else:
+            print("  ⚠️ Please sign in to the airline website manually.")
+            time.sleep(30)
+
+        return True
+
     def _proceed_to_booking(self):
         """
         After flight is selected, use AI to click through booking steps
@@ -274,6 +373,14 @@ Navigate through the booking flow but STOP at payment."""
 
         for turn in range(15):
             print(f"  🤖 Turn {turn + 1}...")
+
+            # Check for access denied errors after each page navigation
+            if self._handle_access_error():
+                # Error was handled, take fresh screenshot and continue
+                screenshot = self.page.screenshot(type="png")
+                parts = [Part(text=prompt), Part.from_bytes(data=screenshot, mime_type="image/png")]
+                contents = [Content(role="user", parts=parts)]
+                continue
 
             response = client.models.generate_content(
                 model=MODEL_NAME, contents=contents, config=config,
